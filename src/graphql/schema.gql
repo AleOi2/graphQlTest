@@ -1,0 +1,11 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type HelloMessage {
+  msg: String!
+}
+
+type Query {
+  hello: [HelloMessage!]!
+}

@@ -1,0 +1,33 @@
+POST http://localhost:3000/user/get_user
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjYsIm5hbWUiOiJBbGV4YW5kcmUgVGVzdGUiLCJpYXQiOjE2OTE1MTMxMjksImV4cCI6MTY5NzUxMzEyOX0.MANfcx_TLZqexVTTCsBjyUVEHvuhOAcSQB2ijR7QznU
+
+{
+  "name": "Alexandre Teste"
+}
+
+###
+
+GET http://localhost:3000/user/get_user
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjgsIm5hbWUiOiJhbGV4YW5kcmUiLCJpYXQiOjE2OTQ3MzQ5OTMsImV4cCI6MTcwMDczNDk5M30.Or-1Tn9ljm43gcebiV4JfUrYJ4_qonN5P4RnEsEKrvo
+
+
+###
+POST http://localhost:3000/auth/signin
+Content-Type: application/json
+
+{
+	"password": "Primeiro Password Teste Real",
+	"name": "Alexandre Teste"
+}
+
+###
+POST http://localhost:3000/auth/signup
+Content-Type: application/json
+
+{
+	"password": "alexandre",
+	"name": "alexandre",
+    "email": "alexandre.jtsubaki@gmail.com"
+}

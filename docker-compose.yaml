@@ -1,0 +1,120 @@
+version: '3'
+services:
+  postgres:
+    image: postgis/postgis
+    env_file:
+      - .env
+    restart: always
+    tty: true
+    ports:
+      - 5005:5432
+    volumes:
+      - ../postgres-data:/var/lib/postgresql/data
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+  front:
+    build: 
+      context: ../pmis_tugboat_front
+    container_name: pmis_tugboat_back_front
+    ports:
+      - 3008:3008
+    # restart: always
+    command:  sh -c "npm install --force; npm run dev"
+    # env_file:
+    #   - ../pmis_tugboat_front/.env    
+  back:
+    container_name: pmis_tugboat_back_back
+    build: 
+      context: .
+    command: 
+      - sh
+      - -c
+      - "./wait-for-it/wait-for-it.sh postgres:5432 && python manage.py migrate && python AddFirstUser.py && gunicorn --bind 0.0.0.0:3006 pmis_tugboat_back.wsgi:application"
+    ports:
+      - 3006:3006
+    volumes:
+      - ../my_token:/my_token
+    depends_on:
+      - postgres
+    restart: always
+    env_file:
+      - .env 
+  async:
+    container_name: pmis_tugboat_back_async
+    build: 
+      context: ./pmis_tugboat_async
+    command:  sh -c "./wait-for-it/wait-for-it.sh postgres:5432; npm install; npm run start:dev"
+    ports:
+      - 5001:5001
+    depends_on:
+      - postgres
+    restart: always
+    env_file:
+      - ./pmis_tugboat_async/.env 
+  worker:
+    container_name: pmis_tugboat_back_worker
+    build: 
+      context: ./worker
+    command:  sh -c "./wait-for-it/wait-for-it.sh postgres:5432; npm install; ./start.sh"
+    depends_on:
+      - postgres
+    restart: always
+    env_file:
+      - .env 
+  tester:
+    container_name: port_tester
+    build: 
+      context: ./access_tester
+      args:
+        - PORT_TESTER=${PORT_TESTER}      
+    # command:  sh -c "npm run dev"
+    command: sh -c 'echo "PORT=${PORT_TESTER}" && npm run dev'
+    ports:
+      - "${PORT_TESTER}:${PORT_TESTER}"
+    env_file:
+      - .env 
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_prod
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ../certbot/conf:/etc/letsencrypt
+      - ../certbot/www:/var/www/certbot:ro      
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - front
+      - back
+      - async
+  nginx-dev:
+    container_name: nginx_dev
+    build:
+      context: ./nginx_dev
+    volumes:
+      - ./nginx_dev/nginx.conf:/etc/nginx/nginx.conf
+      - ../certbot/www/:/var/www/certbot/:ro
+    ports:
+      - "3010:80"
+    depends_on:
+      - front
+      - back
+      - async
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+     - "5050:80"
+    depends_on:
+      - postgres
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ../certbot/conf:/etc/letsencrypt/:rw
+      - ../certbot/www:/var/www/certbot/:rw
+    #command: certonly  --standalone --http-01-port 3010 -d aiswscastor.dyndns.ws
+    command: certonly --webroot --webroot-path /var/www/certbot/ -d aiswscastor.dyndns.ws
+
